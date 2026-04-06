@@ -228,8 +228,8 @@ class ExcelDynamicApp(QMainWindow):
     # Carga de datos
     # ─────────────────────────────────────────────
     def auto_load_excel(self):
-        data_path = Path("..") / "data"
-        input_file = data_path / "prueba.xlsx"
+        data_path = Path(r"\\dc01\JEFELAB\DOCUMENTOS\1. Informes de ensayo de laboratorio\Informes de concreto")
+        input_file = data_path / "verificacion_2.xlsm"
         try:
             data_path.mkdir(exist_ok=True)
             if input_file.exists():
