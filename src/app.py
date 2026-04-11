@@ -361,6 +361,7 @@ class ExcelDynamicApp(QMainWindow):
     # ─────────────────────────────────────────────
     def optimize_cargas_for_esfuerzo_promedio(self, fila, esfuerzo_promedio_deseado):
         try:
+            
             cargas_disponibles = self._detectar_cargas_disponibles(fila)
             if not cargas_disponibles:
                 return None
@@ -405,18 +406,39 @@ class ExcelDynamicApp(QMainWindow):
             except RuntimeError:
                 pass
             return None
-
+        
     def _detectar_cargas_disponibles(self, fila):
         cargas = []
+        row = self.df.iloc[fila]
+
         for i in [1, 2, 3]:
             col1, col2 = f"Diámetro {i}-1", f"Diámetro {i}-2"
-            if (col1 in self.df.columns and col2 in self.df.columns
-                    and pd.notna(self.df.iloc[fila][col1])
-                    and pd.notna(self.df.iloc[fila][col2])
-                    and self.df.iloc[fila][col1] > 0
-                    and self.df.iloc[fila][col2] > 0):
-                cargas.append(i)
+
+            if col1 in self.df.columns and col2 in self.df.columns:
+                try:
+                    v1 = float(row[col1])
+                    v2 = float(row[col2])
+                except (ValueError, TypeError):
+                    continue
+
+                if pd.notna(v1) and pd.notna(v2) and v1 > 0 and v2 > 0:
+                    cargas.append(i)
+
         return cargas
+
+    #def _detectar_cargas_disponibles(self, fila):
+        #cargas = []
+        #for i in [1, 2, 3]:
+            #col1, col2 = f"Diámetro {i}-1", f"Diámetro {i}-2"
+            
+            #if (col1 in self.df.columns and col2 in self.df.columns
+                    #and pd.notna(self.df.iloc[fila][col1])
+                    #and pd.notna(self.df.iloc[fila][col2])
+                    #and self.df.iloc[fila][col1] > 0
+                    #and self.df.iloc[fila][col2] > 0):
+                #cargas.append(i)
+        
+        #return cargas
 
     def _get_diametros_carga(self, fila, carga_idx):
         return [f"Diámetro {carga_idx}-1", f"Diámetro {carga_idx}-2"]
@@ -542,12 +564,28 @@ class ExcelDynamicApp(QMainWindow):
         except Exception:
             return ""
 
+    #def promedio(self, fila, columnas):
+        #valores = [
+            #pd.to_numeric(self.df.iloc[fila][col], errors="coerce")
+            #for col in columnas if col in self.df.columns
+        #]
+        #valores = [v for v in valores if pd.notna(v)]
+        #return sum(valores) / len(valores) if valores else float("nan")
+    
+    
     def promedio(self, fila, columnas):
-        valores = [
-            pd.to_numeric(self.df.iloc[fila][col], errors="coerce")
-            for col in columnas if col in self.df.columns
-        ]
-        valores = [v for v in valores if pd.notna(v)]
+        valores = []
+        row = self.df.iloc[fila]
+
+        for col in columnas:
+            if col in self.df.columns:
+                try:
+                    v = pd.to_numeric(row[col], errors="coerce")
+                    if pd.notna(v):
+                        valores.append(float(v))  # 🔥 FORZAR a float
+                except Exception:
+                    continue
+
         return sum(valores) / len(valores) if valores else float("nan")
 
     def densidad(self, fila, col_masa, cols_diametro, cols_longitud):
@@ -631,6 +669,7 @@ class ExcelDynamicApp(QMainWindow):
 
         # Si el usuario editó Esfuerzo MPa Promedio → optimizar cargas automáticamente
         if col_name == "Esfuerzo MPa Promedio":
+            
             self.selected_row = row
             try:
                 esfuerzo_deseado = float(item.text().strip())
